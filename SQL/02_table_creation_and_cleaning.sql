@@ -24,7 +24,7 @@ SELECT
     p.product_width_cm
 FROM raw_olist.products p
 LEFT JOIN raw_olist.product_category_name_translation t
-	ON p.product_category_name = t.product_category_name
+	ON p.product_category_name = t.product_category_name;
 
 -- 3. Dim Sellers
 CREATE TABLE cleaned.dim_sellers AS
@@ -127,23 +127,34 @@ WITH customer_metrics AS (
         SUM(item_total) AS monetary
     FROM cleaned.fact_order_items
     GROUP BY customer_unique_id
+),
+RFM_Scoring AS (
+	SELECT
+    	customer_unique_id,
+    	last_purchase_date,
+		recency_days,
+    	frequency,
+    	monetary,
+    	NTILE(5) OVER (ORDER BY last_purchase_date) AS r_score,   -- Lower = more recent
+    	NTILE(5) OVER (ORDER BY frequency) AS f_score,
+    	NTILE(5) OVER (ORDER BY monetary) AS m_score
+FROM customer_metrics
 )
-SELECT 
-    customer_unique_id,
-    last_purchase_date,
+SELECT
+	customer_unique_id,
+	last_purchase_date,
 	recency_days,
-    frequency,
-    monetary,
-    NTILE(5) OVER (ORDER BY last_purchase_date) AS recency_score,   -- Lower = more recent
-    NTILE(5) OVER (ORDER BY frequency) AS frequency_score,
-    NTILE(5) OVER (ORDER BY monetary) AS monetary_score,
+	frequency,
+	monetary,
+	CONCAT(r_score,f_score,m_score) AS rfm_score,
 
-	-- combined RFM score
-	NTILE(5) OVER (ORDER BY last_purchase_date) * 100 +
-	NTILE(5) OVER (ORDER BY frequency ) * 10 +
-	NTILE(5) OVER (ORDER BY monetary ) AS rfm_score
-FROM customer_metrics;
-
-select * from analytics.vw_rfm order by monetary desc;
-select * from analytics.vw_sales_summary;
-select * from cleaned.fact_order_items;
+	-- using CASE to group scores into meaningful marketing sagments
+	CASE
+		WHEN r_score >= 4 AND f_score >= 4 AND m_score >= 4 THEN 'Champions (VIP)'
+		WHEN r_score >= 4 AND f_score >= 4 THEN 'Recent Customers (Nurture)'
+		WHEN r_score < 4 AND f_score >= 4 AND m_score >= 4 THEN 'At Risk (High Value)'
+		WHEN r_score < 3 AND f_score < 3 THEN 'Lost/Churned Customers'
+		ELSE 'Average Core Customers'
+	END AS customer_segment
+FROM RFM_Scoring
+ORDER BY rfm_score DESC

@@ -31,7 +31,7 @@ FROM order_level_summary o
 JOIN cleaned.dim_sellers s
 	ON o.seller_id = s.seller_id
 GROUP BY s.seller_id, s.seller_state
-ORDER BY total_revenue DESC
+ORDER BY total_revenue DESC;
 -- =============================================
 
 -- 2. Category Performance View
@@ -66,7 +66,7 @@ ORDER BY total_revenue DESC;
 -- =============================================
 
 -- 3. Customer RFM + Segmentation (Very Important)
---CREAET OR REPLACE VIEW analytics.vw.customer_rfm_segment AS
+CREATE OR REPLACE VIEW analytics.vw.customer_rfm_segment AS
 WITH rfm_base AS (
 	SELECT
 		customer_unique_id,
@@ -113,18 +113,10 @@ FROM customer_rfm_score;
 SELECT
 	c.customer_state,
 	o.order_id,
-	SUM(o.item_total) as order_revenue,
-	MAX(is_late_delivery) is_l
+	ROUND(SUM(o.item_total::NUMERIC),2) as order_revenue,
+	MAX(is_late_delivery) is_late_delivery
 FROM cleaned.fact_order_items o
 JOIN cleaned.dim_customers c
 	ON c.customer_id = o.customer_id
 GROUP BY c.customer_state, o.order_id;
-
-
-select
-	count(*) tota
-from cleaned.fact_order_items WHERE delivery_delay_days > 0;
-
-
-
 	
