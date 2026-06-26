@@ -31,9 +31,9 @@ This project demonstrates a complete end-to-end data analytics solution for Olis
 ## 📊 Key Insights
 
 - Customer Retention: Only ~3% of customers make repeat purchases
-- Revenue: Total Revenue of R$ XX.X Million across 98,666 orders
-- Delivery Performance: On-time delivery rate of XX.X%
-- Top Performing Category: `health_beauty` and `watches_gifts` dominate revenue
+- Revenue: Total Revenue of R$ 16.64 Million across 98,666 orders
+- Delivery Performance: On-time delivery rate of 92.07%
+- Top Performing Category: `Health & Beauty` and `Watches & Gifts` dominate revenue
 - Geographical Insight: São Paulo and Rio de Janeiro contribute highest revenue but face delivery challenges
 
 ---
